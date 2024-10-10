@@ -13,10 +13,8 @@ code to someone else), the case shall be submitted to the Office of the Dean of
 Students. Academic penalties up to and including an F in the course are likely.
 
 UT EID 1: ny3259
-UT EID 2:
+UT EID 2: sjs5658
 """
-
-# SAM: all methods done but having trouble with access. help por favor also add ur eid
 
 from abc import ABC, abstractmethod
 import random
@@ -34,7 +32,6 @@ PERCENTAGE_MIN = 0
 SALARY_ERROR_MESSAGE = "Salary must be non-negative."
 
 
-# TODO: implement this class. You may delete this comment when you are done.
 class Employee(ABC):
     """
     Abstract base class representing a generic employee in the system.
@@ -46,17 +43,53 @@ class Employee(ABC):
         self.is_employed = True
         self.__name = name
         self.__manager = manager
-        self.performance = INITIAL_PERFORMANCE
-        self.happiness = INITIAL_HAPPINESS
-        self.salary = salary
+        self._performance = INITIAL_PERFORMANCE
+        self._happiness = INITIAL_HAPPINESS
+        self._salary = salary
 
-    @property  # idk if we have to write setter methods
+    @property
     def name(self):
         return self.__name
 
-    @property  # for some reason, the other non-employee classes cannot access their methods or
+    @property
     def manager(self):
         return self.__manager
+
+    @property
+    def performance(self):
+        return self._performance
+
+    @performance.setter
+    def performance(self, value):
+        if value < PERCENTAGE_MIN:
+            self._performance = PERCENTAGE_MIN
+        elif value > PERCENTAGE_MAX:
+            self._performance = PERCENTAGE_MAX
+        else:
+            self._performance = value
+
+    @property
+    def happiness(self):
+        return self._happiness
+
+    @happiness.setter
+    def happiness(self, value):
+        if value < PERCENTAGE_MIN:
+            self._happiness = PERCENTAGE_MIN
+        elif value > PERCENTAGE_MAX:
+            self._happiness = PERCENTAGE_MAX
+        else:
+            self._happiness = value
+
+    @property
+    def salary(self):
+        return self._salary
+
+    @salary.setter
+    def salary(self, value):
+        if value < 0:
+            raise ValueError(SALARY_ERROR_MESSAGE)
+        self._salary = value
 
     @abstractmethod
     def work(self):
@@ -65,26 +98,29 @@ class Employee(ABC):
     def interact(self, other):
         if other.name not in self.relationships:
             self.relationships[other.name] = 0
-        elif self.relationships[other.name] >= RELATIONSHIP_THRESHOLD:
-            self.relationships[other.name] += 1
-        elif (
-            self.happiness >= HAPPINESS_THRESHOLD
-            and other.happiness >= HAPPINESS_THRESHOLD
-        ):
-            self.relationships[other.name] += 1
+        if self.relationships[other.name] < RELATIONSHIP_THRESHOLD:
+            if (
+                self.happiness >= HAPPINESS_THRESHOLD
+                and other.happiness >= HAPPINESS_THRESHOLD
+            ):
+                self.relationships[other.name] += 1
+            else:
+                self.relationships[other.name] -= 1
+                self.happiness -= 1
         else:
-            self.relationships[other.name] -= 1
-            self.happiness -= 1
+            self.happiness += 1
 
     def daily_expense(self):
         self.happiness -= 1
         self.savings -= DAILY_EXPENSE
 
     def __str__(self):
-        return f"{self.name}\n\tSalary: ${self.salary}\n\tSavings: ${self.savings}\n\tHappiness: %{self.happiness}\n\tPerformance: %{self.performance}"
+        return (
+            f"{self.name}\n\tSalary: ${self.salary}\n\tSavings: ${self.savings}\n"
+            f"\tHappiness: {self.happiness}%\n\tPerformance: {self.performance}%"
+        )
 
 
-# TODO: implement this class. You may delete this comment when you are done.
 class Manager(Employee):
     """
     A subclass of Employee representing a manager.
@@ -101,7 +137,6 @@ class Manager(Employee):
             self.happiness += 1
 
 
-# TODO: implement this class. You may delete this comment when you are done.
 class TemporaryEmployee(Employee):
     """
     A subclass of Employee representing a temporary employee.
@@ -117,18 +152,19 @@ class TemporaryEmployee(Employee):
 
     def interact(self, other):
         super().interact(other)
-        if type(other) == Manager:
+        if isinstance(other, Manager):
             if (
                 other.happiness >= HAPPINESS_THRESHOLD
                 and self.performance >= TEMP_EMPLOYEE_PERFORMANCE_THRESHOLD
             ):
                 self.savings += MANAGER_BONUS
-            elif other.happiness <= HAPPINESS_THRESHOLD:
-                self.salary = self.salary / 2
-                self.happiness -= 5  # add if salary negative?
+            elif other.happiness < HAPPINESS_THRESHOLD:
+                self.salary = max(0, self.salary // 2)
+                self.happiness -= 5
+                if self.salary == 0:
+                    self.is_employed = False
 
 
-# TODO: implement this class. You may delete this comment when you are done.
 class PermanentEmployee(Employee):
     """
     A subclass of Employee representing a permanent employee.
@@ -142,7 +178,7 @@ class PermanentEmployee(Employee):
 
     def interact(self, other):
         super().interact(other)
-        if type(other) == Manager:
+        if isinstance(other, Manager):
             if (
                 other.happiness >= HAPPINESS_THRESHOLD
                 and self.performance >= PERM_EMPLOYEE_PERFORMANCE_THRESHOLD
