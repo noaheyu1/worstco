@@ -47,6 +47,9 @@ class Employee(ABC):
         self._performance = INITIAL_PERFORMANCE
         self._happiness = INITIAL_HAPPINESS
         self._salary = salary
+        self._performance = INITIAL_PERFORMANCE
+        self._happiness = INITIAL_HAPPINESS
+        self._salary = salary
 
     @property
     def name(self):
