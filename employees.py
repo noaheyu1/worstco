@@ -49,7 +49,10 @@ class Employee(ABC):
         self._salary = salary
         self._performance = INITIAL_PERFORMANCE
         self._happiness = INITIAL_HAPPINESS
-        self._salary = salary
+        if salary < 0:
+            raise ValueError(SALARY_ERROR_MESSAGE)
+        else:
+            self._salary = salary
 
     @property
     def name(self):
